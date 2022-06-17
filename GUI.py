@@ -32,7 +32,7 @@ class App(IO_handler):
     def __init__(self,
                  root):
         self._log = getLogger()
-        super(App, self).__init__()
+        super(App, self).__init__(server_used=address_to_be_used)
 
         self.stop_updating = False
 
