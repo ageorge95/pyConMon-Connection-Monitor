@@ -109,6 +109,7 @@ class Interaction_Handler():
         self.app_obj = app_obj
 
         self.InternetAvailability_obj = InternetAvailability(trusted_website_to_ping=address_to_be_used)
+        self.IO_orchestrator = IO_handler(server_used=address_to_be_used)
 
     def refresh_action(self):
         # add the current status
@@ -131,6 +132,9 @@ class Interaction_Handler():
                               ymin=min(list(trimmed_dict.values())), ymax=max(list(trimmed_dict.values())))
 
         self.app_obj.canvas.draw()
+
+        # finally save the dict on the local storage
+        self.IO_orchestrator.save_data(self.app_obj.data)
 
     def refresh_plot(self):
 
