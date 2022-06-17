@@ -153,6 +153,7 @@ if __name__ == '__main__':
 
     root = CTk()
     root.geometry("1200x600")
+    root.title('pyConMon')
     app = App(root)
 
     Thread(target=(lambda app : getattr(Interaction_Handler(app), 'refresh_plot'))(app)
