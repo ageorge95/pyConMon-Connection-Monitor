@@ -1,4 +1,5 @@
 from sys import stdout
+from os import system
 from logging import basicConfig, \
     INFO, DEBUG, WARNING, ERROR, CRITICAL, \
     Formatter, \
@@ -7,6 +8,9 @@ from logging import basicConfig, \
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 def configure_logger():
+    # enable colored output in windows cmd
+    system("color")
+
     class CustomFormatter(Formatter):
         grey = "\x1b[38;21m"
         yellow = "\x1b[33;21m"
