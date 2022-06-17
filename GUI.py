@@ -25,8 +25,15 @@ parser.add_argument('-a',
                     help='The address to be used for the connectivity check',
                     default=trusted_website_to_ping_config)
 
+parser.add_argument('-t',
+                    '--title',
+                    type=str,
+                    help='Additional string to append to the window title.',
+                    default='')
+
 args = parser.parse_args()
 address_to_be_used = args.address
+title = args.title
 
 class App(IO_handler):
     def __init__(self,
@@ -153,7 +160,7 @@ if __name__ == '__main__':
 
     root = CTk()
     root.geometry("1200x600")
-    root.title('pyConMon')
+    root.title(f'pyConMon {title}')
     app = App(root)
 
     Thread(target=(lambda app : getattr(Interaction_Handler(app), 'refresh_plot'))(app)
