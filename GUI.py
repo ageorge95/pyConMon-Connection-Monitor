@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 from time import sleep
 from threading import Thread
 from logging import getLogger
-from datetime import datetime
+from datetime import datetime,\
+    timedelta
 from argparse import ArgumentParser
 
 # Optional CLI interface
@@ -50,12 +51,14 @@ class App(IO_handler):
 
         xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
         self.ax1.xaxis.set_major_formatter(xfmt)
-        self.ax1.tick_params(axis='x', labelrotation=45)
+        self.ax1.tick_params(axis='x',
+                             labelrotation=45)
 
-        self.line, = self.ax1.plot(list(self.data.keys()),
-                                  list(self.data.values()),
-                                  linewidth = 3,
-                                  c = 'r')
+        self.axvspans = []
+        for pair in self.data:
+            self.axvspans.append(self.ax1.axvspan(pair[0]['date'],
+                                                  pair[1]['date'],
+                                                  color = 'green' if pair[1]['status'] else 'red'))
 
         self.fig.tight_layout()
 
@@ -118,25 +121,94 @@ class Interaction_Handler():
         self.InternetAvailability_obj = InternetAvailability(trusted_website_to_ping=address_to_be_used)
         self.IO_orchestrator = IO_handler(server_used=address_to_be_used)
 
+        # auto calculate the needed variables
+        self.max_gap_s = self.app_obj.input_combobox_cycle_time.values[-1]
+        self.max_gap_s = int(eval(self.max_gap_s.split(' ')[1]))
+
+        self.max_history_s = self.app_obj.input_combobox_max_history_h.values[-1]
+        self.max_history_s = 60 * 60 * int(eval(self.max_history_s.split(' ')[1]))
+
+    def decimate_data(self):
+
+        if len(self.app_obj.data) > 1:
+            # bootstraping #1
+            if type(self.app_obj.data[0]) != type(list()):
+                self.app_obj.data.insert(0,
+                                         [self.app_obj.data[0],
+                                          self.app_obj.data[0]])
+
+            # remove entries that are too old
+            oldest_date_allowed = datetime.now() - timedelta(seconds=self.max_history_s)
+            tmp_array = self.app_obj.data.copy()
+            for index, elmnt in enumerate(self.app_obj.data):
+                if type(elmnt) == type(list()):
+                    if elmnt[-1]['date'] < oldest_date_allowed:
+                        del tmp_array[index]
+                    elif elmnt[0]['date'] < oldest_date_allowed:
+                        tmp_array[index][0] = oldest_date_allowed
+                    else:
+                        break
+                else:
+                    break
+            self.app_obj.data = tmp_array.copy()
+
+            # bootstraping #2
+            # this may never be needed, but just to be thorough
+            if type(self.app_obj.data[0]) != type(list()):
+                self.app_obj.data[0].insert(0,
+                                            [self.app_obj.data[0],
+                                             self.app_obj.data[0]])
+
+            # loop through all the elements and decimate the data
+            tmp_array = []
+            for elmnt in self.app_obj.data:
+
+                # if we find a list, it means that it was already checked in the past, so it is OK
+                if type(elmnt) == type(list()):
+                    tmp_array.append(elmnt)
+
+                # if we find a dict, the value needs to be merged
+                if type(elmnt) == type(dict()):
+                    if (elmnt['date'] - tmp_array[-1][-1]['date']).total_seconds() < self.max_gap_s:
+
+                        # check if the status is the same
+                        if elmnt['status'] == tmp_array[-1][-1]['status']:
+                            tmp_array[-1][-1] = elmnt
+                        else:
+                            tmp_array.append([elmnt,
+                                              elmnt])
+                    else:
+                        tmp_array.append([elmnt,
+                                          elmnt])
+            self.app_obj.data = tmp_array.copy()
+
     def refresh_action(self):
         # add the current status
         online_status = self.InternetAvailability_obj.check_online_status()
-        self.app_obj.data[datetime.now()] = online_status
+        self.app_obj.data.append({'date': datetime.now(),
+                                  'status': online_status})
+
+        self.decimate_data()
 
         # update the status label
         self.app_obj.label_current_status.config({'text': f"Current status is {'OFFLINE' if not online_status else 'ONLINE'}",
                                                   'fg': 'red' if not online_status else 'green'})
 
-        self.app_obj.line.set_data(list(self.app_obj.data.keys()),
-                                            list(self.app_obj.data.values()))
+        for axvspan in self.app_obj.axvspans:
+            axvspan.remove()
+
+        self.app_obj.axvspans = []
+        for pair in self.app_obj.data:
+            self.app_obj.axvspans.append(self.app_obj.ax1.axvspan(pair[0]['date'],
+                                                                  pair[1]['date'],
+                                                                  color = 'green' if pair[1]['status'] else 'red'))
 
         # trim the data to be shown
         datetime_now = datetime.now()
-        max_history_s = self.app_obj.seconds_combobox_max_history_s()
-        trimmed_dict = dict(filter(lambda _:(datetime_now - _[0]).total_seconds() < max_history_s, self.app_obj.data.items()))
-
-        self.app_obj.ax1.axis(xmin=min(list(trimmed_dict.keys())),xmax=max(list(trimmed_dict.keys())),
-                              ymin=min(list(trimmed_dict.values())), ymax=max(list(trimmed_dict.values())))
+        history_s = self.app_obj.seconds_combobox_max_history_s()
+        oldest_date_allowed = datetime.now() - timedelta(seconds=history_s)
+        self.app_obj.ax1.axis(xmin=max([oldest_date_allowed, self.app_obj.data[0][0]['date']]),
+                              xmax=datetime_now)
 
         self.app_obj.canvas.draw()
 
