@@ -56,9 +56,10 @@ class App(IO_handler):
 
         self.axvspans = []
         for pair in self.data:
-            self.axvspans.append(self.ax1.axvspan(pair[0]['date'],
-                                                  pair[1]['date'],
-                                                  color = 'green' if pair[1]['status'] else 'red'))
+            if type(self.data[0]) == type(list()):
+                self.axvspans.append(self.ax1.axvspan(pair[0]['date'],
+                                                      pair[1]['date'],
+                                                      color = 'green' if pair[1]['status'] else 'red'))
 
         self.fig.tight_layout()
 
