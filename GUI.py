@@ -36,9 +36,21 @@ args = parser.parse_args()
 address_to_be_used = args.address
 title = args.title
 
+
+class handle_exit():
+    def __init__(self):
+        self.to_exit = False
+
+    def exit(self):
+        print('Exit command received.')
+        self.to_exit = True
+
 class App(IO_handler):
     def __init__(self,
                  root):
+
+        self.root = root
+
         self._log = getLogger()
         super(App, self).__init__(server_used=address_to_be_used)
 
@@ -115,8 +127,10 @@ class App(IO_handler):
 
 class Interaction_Handler():
     def __init__(self,
-                 app_obj: App):
+                 app_obj: App,
+                 to_exit: handle_exit = False):
 
+        self.to_exit = to_exit
         self.app_obj = app_obj
 
         self.InternetAvailability_obj = InternetAvailability(machine_and_port_to_ping=address_to_be_used)
@@ -216,14 +230,25 @@ class Interaction_Handler():
         # finally save the dict on the local storage
         self.IO_orchestrator.save_data(self.app_obj.data)
 
+    def sleep_and_check_exit(self,
+                             duration_s):
+        for _ in range(duration_s):
+            sleep(1)
+            if self.to_exit.to_exit:
+                self.app_obj.label_current_status.config({'text': f"EXITING...",
+                                                          'fg': 'orange'})
+                sleep(2)
+                self.app_obj.root.quit()
+                sys.exit(0)
+
     def refresh_plot(self):
 
         # allow the GUI to load and then do an initial GUI update
-        sleep(5)
+        self.sleep_and_check_exit(5)
         self.refresh_action()
 
         while True:
-            sleep(self.app_obj.seconds_combobox_cycle_time())
+            self.sleep_and_check_exit(self.app_obj.seconds_combobox_cycle_time())
             while self.app_obj.stop_updating:
                 sleep(1)
             self.refresh_action()
@@ -231,12 +256,16 @@ class Interaction_Handler():
 if __name__ == '__main__':
     configure_logger()
 
+    to_exit = handle_exit()
+
     root = CTk()
     root.geometry("1200x600")
     root.title(f'pyConMon {title}')
+    root.protocol("WM_DELETE_WINDOW", (lambda : to_exit.exit()))
     app = App(root)
 
-    Thread(target=(lambda app : getattr(Interaction_Handler(app), 'refresh_plot'))(app)
+    Thread(target=(lambda  : getattr(Interaction_Handler(app,
+                                                         to_exit), 'refresh_plot'))()
            ).start()
 
     root.mainloop()
