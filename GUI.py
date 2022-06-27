@@ -4,7 +4,7 @@ sys.path.insert(0, 'CustomTkinter')
 from logger import configure_logger
 from IO import IO_handler
 from InternetAvailability import InternetAvailability,\
-    trusted_website_to_ping_config
+    machine_and_port_to_ping
 from CustomTkinter.customtkinter import CTk, CTkButton, CTkLabel, CTkComboBox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,\
     NavigationToolbar2Tk
@@ -23,8 +23,8 @@ parser = ArgumentParser(description='Optional CLI interface for the connectivity
 parser.add_argument('-a',
                     '--address',
                     type=str,
-                    help='The address to be used for the connectivity check',
-                    default=trusted_website_to_ping_config)
+                    help='The address to be used for the connectivity check; Must be like "machine_name:port"',
+                    default=machine_and_port_to_ping)
 
 parser.add_argument('-t',
                     '--title',
@@ -119,7 +119,7 @@ class Interaction_Handler():
 
         self.app_obj = app_obj
 
-        self.InternetAvailability_obj = InternetAvailability(trusted_website_to_ping=address_to_be_used)
+        self.InternetAvailability_obj = InternetAvailability(machine_and_port_to_ping=address_to_be_used)
         self.IO_orchestrator = IO_handler(server_used=address_to_be_used)
 
         # auto calculate the needed variables
