@@ -49,6 +49,8 @@ class IO_handler():
                     return load(json_in_handle)
             except:
                 self._log.error(f"Failed to load {path.abspath(f'{self.server_used}.pickle')} !\n{format_exc(chain=False)}")
+                return [{'date': datetime.now(),
+                         'status': InternetAvailability().check_online_status()}]
         else:
             self._log.warning(f"{path.abspath(f'{self.server_used}.pickle')} not found. Bootstrapping a new data dict ...")
             return [{'date': datetime.now(),
