@@ -1,3 +1,2 @@
 TITLE PyConMon GUI
-python GUI.py -a 8.8.8.8 -t example
-pause
+python GUI.py -a google.com:80 -t internet
