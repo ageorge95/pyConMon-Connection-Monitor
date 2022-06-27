@@ -18,7 +18,7 @@ class IO_handler():
         if not self._log:
             self._log: getLogger = getLogger()
 
-        self.server_used = server_used
+        self.server_used = server_used.replace(':', '_')
 
     def save_data(self,
                   object: List) -> None:
