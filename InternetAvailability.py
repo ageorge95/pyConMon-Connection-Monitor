@@ -1,5 +1,4 @@
 from logging import getLogger
-from subprocess import check_call, DEVNULL
 from typing import AnyStr
 import socket
 
@@ -15,7 +14,7 @@ class InternetAvailability():
 
         self.machine_and_port_to_ping = machine_and_port_to_ping
         self.machine_to_ping = self.machine_and_port_to_ping.split(':')[0]
-        self.port_to_ping = self.machine_and_port_to_ping.split(':')[1]
+        self.port_to_ping = int(self.machine_and_port_to_ping.split(':')[1])
 
     def check_online_status(self) -> int:
         try:
