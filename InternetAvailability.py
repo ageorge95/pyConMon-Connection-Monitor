@@ -14,12 +14,14 @@ class InternetAvailability():
             self._log: getLogger = getLogger()
 
         self.machine_and_port_to_ping = machine_and_port_to_ping
+        self.machine_to_ping = self.machine_and_port_to_ping.split(':')[0]
+        self.port_to_ping = self.machine_and_port_to_ping.split(':')[1]
 
     def check_online_status(self) -> int:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(2)  # 2 Second Timeout
-            error = sock.connect_ex(('google.com', 80))
+            error = sock.connect_ex((self.machine_to_ping, self.port_to_ping))
             if not error:
                 self._log.info(f"According to {self.machine_and_port_to_ping} you are ONline !")
                 return 1
