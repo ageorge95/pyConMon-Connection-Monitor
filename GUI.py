@@ -160,7 +160,8 @@ class Interaction_Handler():
                     if elmnt[-1]['date'] < oldest_date_allowed:
                         del tmp_array[index]
                     elif elmnt[0]['date'] < oldest_date_allowed:
-                        tmp_array[index][0] = oldest_date_allowed
+                        tmp_array[index][0] = {'date': oldest_date_allowed,
+                                               'status': elmnt[0]['status']}
                     else:
                         break
                 else:
