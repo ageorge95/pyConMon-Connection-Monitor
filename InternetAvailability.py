@@ -1,6 +1,7 @@
 from logging import getLogger
 from typing import AnyStr
-from subprocess import check_output
+from socket import gethostbyname,\
+    create_connection
 
 machine_and_port_to_ping = r'internetbeacon.msedge.net:80'
 
@@ -17,11 +18,29 @@ class InternetAvailability():
         self.port_to_ping = int(self.machine_and_port_to_ping.split(':')[1])
 
     def check_online_status(self) -> int:
-        test_results = check_output(f'powershell "Test-NetConnection -Port {self.port_to_ping} -ComputerName {self.machine_to_ping}"').decode('utf-8')
-        self._log.info(f'Current ping results:\n{test_results.strip()}')
-        if 'TcpTestSucceeded : True' in test_results:
-            self._log.info(f"According to {self.machine_and_port_to_ping} you are ONline !")
-            return 1
-        else:
-            self._log.warning(f"According to {self.machine_and_port_to_ping} you are OFFline !")
+        # first check is that the DNS resolution completes successfully
+        try:
+            gethostbyname(self.machine_to_ping)
+            self._log.info(f'DNS resolution completed successfully for {self.machine_to_ping}')
+        except:
+            self._log.warning(f'DNS resolution failed for {self.machine_to_ping}')
             return 0
+
+        # then check that an actual connection can be made
+        try:
+            conn = create_connection(address=(self.machine_to_ping, self.port_to_ping),
+                                     timeout=1)
+            conn.close()
+            self._log.info(f'A connection was made successfully to {self.machine_to_ping}:{self.port_to_ping}.')
+            return 1
+        except:
+            self._log.warning(f'Could not connect to {self.machine_to_ping}:{self.port_to_ping} !')
+            return 0
+
+# only for testing purposes
+if __name__ == '__main__':
+    from logger import configure_logger
+    configure_logger()
+
+    test = InternetAvailability()
+    test.check_online_status()
