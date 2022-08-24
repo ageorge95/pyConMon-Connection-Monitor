@@ -154,18 +154,17 @@ class Interaction_Handler():
 
             # remove entries that are too old
             oldest_date_allowed = datetime.now() - timedelta(seconds=self.max_history_s)
-            tmp_array = self.app_obj.data.copy()
+            tmp_array = []
             for index, elmnt in enumerate(self.app_obj.data):
                 if type(elmnt) == type(list()):
-                    if elmnt[-1]['date'] < oldest_date_allowed:
-                        del tmp_array[index]
-                    elif elmnt[0]['date'] < oldest_date_allowed:
-                        tmp_array[index][0] = {'date': oldest_date_allowed,
-                                               'status': elmnt[0]['status']}
-                    else:
-                        break
+                    if elmnt[-1]['date'] > oldest_date_allowed:
+                        tmp_element = elmnt.copy()
+                        if tmp_element[0]['date'] < oldest_date_allowed:
+                            tmp_element[0] = {'date': oldest_date_allowed,
+                                              'status': tmp_element[0]['status']}
+                        tmp_array.append(tmp_element)
                 else:
-                    break
+                    tmp_array.append(elmnt)
             self.app_obj.data = tmp_array.copy()
 
             # bootstraping #2
