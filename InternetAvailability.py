@@ -28,6 +28,7 @@ class InternetAvailability():
 
         # then check that an actual connection can be made
         try:
+            # a max timeout is hardcoded as 10
             conn = create_connection(address=(self.machine_to_ping, self.port_to_ping),
                                      timeout=1)
             conn.close()

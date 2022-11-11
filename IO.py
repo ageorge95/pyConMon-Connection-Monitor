@@ -4,8 +4,6 @@ from logging import getLogger
 from os import path
 from time import sleep
 from traceback import format_exc
-from datetime import datetime
-from InternetAvailability import InternetAvailability
 from pickle import load,\
     dump
 
@@ -50,9 +48,7 @@ class IO_handler():
                     return load(json_in_handle)
             except:
                 self._log.error(f"Failed to load {path.abspath(f'{self.server_used_replaced}.pickle')} !\n{format_exc(chain=False)}")
-                return [{'date': datetime.now(),
-                         'status': InternetAvailability(machine_and_port_to_ping=self.server_used).check_online_status()}]
+                return []
         else:
             self._log.warning(f"{path.abspath(f'{self.server_used_replaced}.pickle')} not found. Bootstrapping a new data dict ...")
-            return [{'date': datetime.now(),
-                     'status': InternetAvailability(machine_and_port_to_ping=self.server_used).check_online_status()}]
+            return []

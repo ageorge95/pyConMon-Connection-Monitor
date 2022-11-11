@@ -136,66 +136,80 @@ class Interaction_Handler():
         self.InternetAvailability_obj = InternetAvailability(machine_and_port_to_ping=address_to_be_used)
         self.IO_orchestrator = IO_handler(server_used=address_to_be_used)
 
-        # auto calculate the needed variables
-        self.max_gap_s = self.app_obj.input_combobox_cycle_time.values[-1]
-        self.max_gap_s = int(eval(self.max_gap_s.split(' ')[1]))
-
         self.max_history_s = self.app_obj.input_combobox_max_history_h.values[-1]
         self.max_history_s = 60 * 60 * int(eval(self.max_history_s.split(' ')[1]))
 
     def decimate_data(self):
+        # NOTE: app_obj.data is al ist of lists or dicts
+        # each sublist contains two dicts [from_timestamp_data, to_timestamp_data]
 
-        if len(self.app_obj.data) > 1:
-            # bootstraping #1
-            if type(self.app_obj.data[0]) != type(list()):
-                self.app_obj.data.insert(0,
-                                         [self.app_obj.data[0],
-                                          self.app_obj.data[0]])
+        # ONLY decimate the data if app_obj.data has data in it
+        if len(self.app_obj.data) > 0:
+            # if the first element is a dict, meaning that this is the first time the tool was launched
+            # then overwrite the first entry with a bootstrapped list
+            if isinstance(self.app_obj.data[0], dict):
+                to_overwrite = [self.app_obj.data[0],
+                                self.app_obj.data[0]]
+                self.app_obj.data[0] = to_overwrite
 
             # remove entries that are too old
             oldest_date_allowed = datetime.now() - timedelta(seconds=self.max_history_s)
-            tmp_array = []
+            new_data_array = []
             for index, elmnt in enumerate(self.app_obj.data):
-                if type(elmnt) == type(list()):
-                    if elmnt[-1]['date'] > oldest_date_allowed:
+                if isinstance(elmnt, list):
+                    # if the to_timestamp_data is too old, skip the whole element
+                    if elmnt[1]['date'] < oldest_date_allowed:
+                        continue
+
+                    # if the from_timestamp_data is too old, overwrite the date with the oldest possible date
+                    if elmnt[0]['date'] < oldest_date_allowed:
                         tmp_element = elmnt.copy()
-                        if tmp_element[0]['date'] < oldest_date_allowed:
-                            tmp_element[0] = {'date': oldest_date_allowed,
-                                              'status': tmp_element[0]['status']}
-                        tmp_array.append(tmp_element)
+                        tmp_element[0]['date'] = oldest_date_allowed
+
+                        new_data_array.append(tmp_element)
+                        continue
+
+                    # otherwise both 0 and 1 entries are recent, just add them
+                    new_data_array.append(elmnt)
                 else:
-                    tmp_array.append(elmnt)
-            self.app_obj.data = tmp_array.copy()
+                    # append the last element which is the new dict data
+                    new_data_array.append(self.app_obj.data[-1])
+            self.app_obj.data = new_data_array.copy()
 
-            # bootstraping #2
-            # this may never be needed, but just to be thorough
-            if type(self.app_obj.data[0]) != type(list()):
-                self.app_obj.data[0].insert(0,
-                                            [self.app_obj.data[0],
-                                             self.app_obj.data[0]])
+            # corner case where all the entries are too old and removed,
+            # thus only the last dict entry remains, thus nothing to decimate
+            # so redo the decimation algo to create the first list
+            if isinstance(self.app_obj.data[0], dict):
+                self.decimate_data()
 
-            # loop through all the elements and decimate the data
-            tmp_array = []
-            for elmnt in self.app_obj.data:
+            # decimate the data
+            if isinstance(self.app_obj.data[-1], dict):
+                # just a small sanity check, can be removed in the future
+                if isinstance(self.app_obj.data[-2], dict):
+                    raise Exception('The second last data entry is a dict !')
 
-                # if we find a list, it means that it was already checked in the past, so it is OK
-                if type(elmnt) == type(list()):
-                    tmp_array.append(elmnt)
+                self.max_gap_s = self.app_obj.input_combobox_cycle_time.get()
+                # added 10sec to account for timeouts
+                self.max_gap_s = int(eval(self.max_gap_s.split(' ')[1])) + 10
 
-                # if we find a dict, the value needs to be merged
-                if type(elmnt) == type(dict()):
-                    if (elmnt['date'] - tmp_array[-1][-1]['date']).total_seconds() < self.max_gap_s:
+                # only if the max_gap rule is respected
+                if (self.app_obj.data[-1]['date'] - self.app_obj.data[-2][1]['date']).total_seconds() < self.max_gap_s:
 
-                        # check if the status is the same
-                        if elmnt['status'] == tmp_array[-1][-1]['status']:
-                            tmp_array[-1][-1] = elmnt
-                        else:
-                            tmp_array.append([elmnt,
-                                              elmnt])
+                    # check if the status is the same and merge the new dict in the last list pair
+                    if self.app_obj.data[-1]['status'] == self.app_obj.data[-2][1]['status']:
+                        self.app_obj.data[-2] = [self.app_obj.data[-2][0],
+                                                 self.app_obj.data[-1]]
+                        del self.app_obj.data[-1]
+                    # otherwise create a new pair
                     else:
-                        tmp_array.append([elmnt,
-                                          elmnt])
-            self.app_obj.data = tmp_array.copy()
+                        to_overwrite = [self.app_obj.data[-2][1], # use the last status in order to not create gaps
+                                        self.app_obj.data[-1]]
+                        self.app_obj.data[-1] = to_overwrite
+                # otherwise just create a new entry pair at the last array place
+                else:
+                    to_overwrite = [self.app_obj.data[-1],
+                                    self.app_obj.data[-1]]
+                    self.app_obj.data[-1] = to_overwrite
 
     def refresh_action(self):
         # add the current status
@@ -264,8 +278,8 @@ if __name__ == '__main__':
     root.protocol("WM_DELETE_WINDOW", (lambda : to_exit.exit()))
     app = App(root)
 
-    Thread(target=(lambda  : getattr(Interaction_Handler(app,
-                                                         to_exit), 'refresh_plot'))()
+    Thread(target=(lambda : getattr(Interaction_Handler(app,
+                                                        to_exit), 'refresh_plot'))()
            ).start()
 
     root.mainloop()
