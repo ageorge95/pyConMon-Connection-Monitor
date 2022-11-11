@@ -1,5 +1,5 @@
 # pyConMon-Connection-Monitor
-GUI &amp; backend written in python to monitor connection to a certain server
+GUI &amp; backend written in python to monitor the connection to a certain server
 
 # current GUI layout
 
