@@ -75,10 +75,12 @@ class App(IO_handler):
 
         self.fig.tight_layout()
 
-        self.label_server_used = CTkLabel(text=f"Using {address_to_be_used} to check the connectivity.")
+        self.label_server_used = CTkLabel(master=root,
+                                          text=f"Using {address_to_be_used} to check the connectivity.")
         self.label_server_used.pack()
 
-        self.label_current_status = CTkLabel(text="Current status is INITIALIZED",
+        self.label_current_status = CTkLabel(master=root,
+                                             text="Current status is INITIALIZED",
                                              text_color='orange')
         self.label_current_status.pack()
 
@@ -92,11 +94,13 @@ class App(IO_handler):
         self.toolbar.update()
         self.toolbar.pack(side='left')
 
-        self.button_stop_resume = CTkButton(text='STOP/ RESUME',
+        self.button_stop_resume = CTkButton(master=root,
+                                            text='STOP/ RESUME',
                                             command=self.stop_resume_action)
         self.button_stop_resume.pack(side='right')
 
-        self.input_combobox_cycle_time = CTkComboBox(values=['Cycle 10 sec',
+        self.input_combobox_cycle_time = CTkComboBox(master=root,
+                                                     values=['Cycle 10 sec',
                                                              'Cycle 30 sec',
                                                              'Cycle 1*60 sec',
                                                              'Cycle 2*60 sec',
@@ -106,7 +110,8 @@ class App(IO_handler):
         self.input_combobox_cycle_time.pack(side='right')
         self.seconds_combobox_cycle_time = lambda : int(eval(self.input_combobox_cycle_time.get().split(' ')[1]))
 
-        self.input_combobox_max_history_h = CTkComboBox(values = ['History 1*24 h',
+        self.input_combobox_max_history_h = CTkComboBox(master=root,
+                                                        values = ['History 1*24 h',
                                                                   'History 2*24 h',
                                                                   'History 3*24 h',
                                                                   'History 4*24 h',
@@ -136,7 +141,7 @@ class Interaction_Handler():
         self.InternetAvailability_obj = InternetAvailability(machine_and_port_to_ping=address_to_be_used)
         self.IO_orchestrator = IO_handler(server_used=address_to_be_used)
 
-        self.max_history_s = self.app_obj.input_combobox_max_history_h.values[-1]
+        self.max_history_s = self.app_obj.input_combobox_max_history_h._values[-1]
         self.max_history_s = 60 * 60 * int(eval(self.max_history_s.split(' ')[1]))
 
     def decimate_data(self):
@@ -220,8 +225,9 @@ class Interaction_Handler():
         self.decimate_data()
 
         # update the status label
-        self.app_obj.label_current_status.config({'text': f"Current status is {'OFFLINE' if not online_status else 'ONLINE'}",
-                                                  'fg': 'red' if not online_status else 'green'})
+        self.app_obj.label_current_status.configure(require_redraw=True,
+                                                    **{'text': f"Current status is {'OFFLINE' if not online_status else 'ONLINE'}",
+                                                       'text_color': 'red' if not online_status else 'green'})
 
         for axvspan in self.app_obj.axvspans:
             axvspan.remove()
