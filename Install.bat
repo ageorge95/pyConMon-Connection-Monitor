@@ -1,10 +1,13 @@
 @echo off
 
+set python=%1
+IF "%python%"=="" set python="python"
+
 :: installation
 
 git submodule update --progress --init --recursive --force
 
-python -m venv venv
+%python% -m venv venv
 :: Windows doesn't allow the creation of symlinks without special priviledges, so hardlinks are created instead.
 mklink /h activate.bat venv\Scripts\activate.bat
 
