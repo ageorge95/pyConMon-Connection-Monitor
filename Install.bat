@@ -10,6 +10,8 @@ mklink /h activate.bat venv\Scripts\activate.bat
 
 call activate.bat
 
+python install_helper.py
+
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
