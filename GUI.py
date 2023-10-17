@@ -126,8 +126,9 @@ class App(IO_handler):
         self.stop_updating = not self.stop_updating
 
         # update the status label
-        self.label_current_status.config({'text': f"Current status is {'PAUSED' if self.stop_updating else 'RESUMED'}",
-                                           'fg': 'orange'})
+        self.label_current_status.configure(require_redraw=True,
+                                            **{'text': f"Current status is {'PAUSED' if self.stop_updating else 'RESUMED'}",
+                                               'text_color': 'orange'})
         self._log.info('STOP command received.')
 
 class Interaction_Handler():
@@ -255,8 +256,9 @@ class Interaction_Handler():
         for _ in range(duration_s):
             sleep(1)
             if self.to_exit.to_exit:
-                self.app_obj.label_current_status.config({'text': f"EXITING...",
-                                                          'fg': 'orange'})
+                self.app_obj.label_current_status.configure(require_redraw=True,
+                                                            **{'text': f"EXITING...",
+                                                               'text_color': 'orange'})
                 sleep(2)
                 self.app_obj.root.quit()
                 sys.exit(0)
