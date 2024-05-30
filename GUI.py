@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, 'CustomTkinter')
 
-from logger import configure_logger
+from ag95 import configure_logger
 from IO import IO_handler
 from InternetAvailability import InternetAvailability,\
     machine_and_port_to_ping

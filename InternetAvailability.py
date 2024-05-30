@@ -1,3 +1,4 @@
+from ag95 import configure_logger
 from logging import getLogger
 from typing import AnyStr
 from socket import gethostbyname,\
@@ -40,7 +41,6 @@ class InternetAvailability():
 
 # only for testing purposes
 if __name__ == '__main__':
-    from logger import configure_logger
     configure_logger()
 
     test = InternetAvailability()
