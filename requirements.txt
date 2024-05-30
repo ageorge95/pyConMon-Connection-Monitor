@@ -1,3 +1,4 @@
 concurrent_log_handler
 darkdetect
 matplotlib
+git+https://github.com/ageorge95/ag95.git
