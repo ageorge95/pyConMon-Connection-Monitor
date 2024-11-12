@@ -1,4 +1,2 @@
-concurrent_log_handler
-darkdetect
+git+https://github.com/ageorge95/CustomTkinter@v5.2.2
 matplotlib
-git+https://github.com/ageorge95/ag95.git
