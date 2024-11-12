@@ -5,7 +5,7 @@ from ag95 import configure_logger
 from IO import IO_handler
 from InternetAvailability import InternetAvailability,\
     machine_and_port_to_ping
-from CustomTkinter.customtkinter import CTk, CTkButton, CTkLabel, CTkComboBox
+from customtkinter import CTk, CTkButton, CTkLabel, CTkComboBox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,\
     NavigationToolbar2Tk
 import matplotlib.dates as md
@@ -276,7 +276,7 @@ class Interaction_Handler():
             self.refresh_action()
 
 if __name__ == '__main__':
-    configure_logger()
+    configure_logger(log_level='INFO')
 
     to_exit = handle_exit()
 
